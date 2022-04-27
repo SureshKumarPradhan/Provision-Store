@@ -1,0 +1,220 @@
+ <!DOCTYPE html>
+<html>
+
+<head>
+    <title>
+        Provision Store App
+    </title>
+    <style>
+        * {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root">
+  
+    </div>
+
+    <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+
+    <script type="text/babel">
+        const rootHandle = document.getElementById('root')
+        const { useState } = React
+        const data = [
+            { "id": 101, "name": "Rice-Raw Sona Masuri", "price": 54 },
+            { "id": 104, "name": "Rice-Raw Sona Masuri - super premium", "price": 58 },
+            { "id": 105, "name": "Poha thick", "price": 48 },
+            { "id": 110, "name": "Poha Medium", "price": 55 },
+            { "id": 111, "name": "Organic Sona Masuri Rice", "price": 69 }
+        ]
+
+        function Header(props) {
+            const d = new Date()
+            return (
+                <div>
+                    <h1>Raja Provision Store <span style={{ float: 'right' }}>{d.toLocaleDateString()}</span></h1>
+                    <hr />
+                </div>
+            )
+        }
+        function Search(props) {
+            const { handleChangeSearchKey, searchKey } = props
+            return (
+                <div>
+                    <input type="text" placeholder='Search item by name/code' style={{ width: '97%', height: '20px' }} value={searchKey} onChange={handleChangeSearchKey} />
+                    <hr />
+                </div>
+            )
+        }
+        function MenuItem(props) {
+            const { items, searchKey, handleChangeAddItem } = props
+            return (
+                <div>
+                    <h1>MenuItem</h1>
+                    <table border='1px'>
+                        <caption>List of products</caption>
+                        <thead>
+                            <tr><th>Name</th><th>Price</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            {
+                                items.filter(ele => { if ((ele.name.toLowerCase()).includes(searchKey) || (String(ele.id).includes(searchKey))) return ele }).map(ele => {
+                                    return (
+                                        <tr key={ele.id}><td>{ele.name}</td><td>{ele.price}</td><td><input type="button" onClick={() => { handleChangeAddItem(ele.id) }} style={{ backgroundColor: '#008CBA', color: 'white' }} value="Add" /></td></tr>
+                                    )
+                                })
+                            }
+                        </tbody>
+                    </table>
+                    <hr />
+                </div>
+            )
+        }
+        function CartItem(props) {
+            const { cartItem, decQuantity, incQuantity, quantity, handleRemove } = props
+            return (
+                <div>
+                    <h1>CartItem</h1>
+                    {
+
+                        <table border='1'>
+                            <caption>List of Cart items</caption>
+                            <thead>
+                                <tr><th>#</th><th>Name</th><th>Price</th><th>Quality</th><th>Total</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                {
+                                    cartItem.map(item => {
+                                        return (
+                                            <tr key={item.id}>
+                                                <td>{item.id}</td>
+                                                <td>{item.name}</td>
+                                                <td>{item.price}</td>
+                                                <td><input type="button" disabled={item.quantities <= 1} value="-1" onClick={() => decQuantity(item.id)} />{item.quantities}<input type="button" value="+1" onClick={() => incQuantity(item.id)} /></td>
+                                                <td>{item.total}</td>
+                                                <td><input type="button" onClick={() => { handleRemove(item.id) }} value="Remove" style={{ backgroundColor: '#f44336', color: 'white' }} /></td>
+                                            </tr>
+                                        )
+                                    })
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            )
+        }
+        function Total(props) {
+            const { totalItems, cartTotal } = props
+            console.log(props);
+            return (
+                <div>
+                    <h1 style={{ float: 'right' }} >Total - {props.cartTotal}</h1>// hear
+                </div>
+            )
+        }
+        function Bill(props) {
+            const { reset } = props
+            return (
+                <div>
+                    <h1>Bill</h1>
+                    <button onClick={() => { window.print() }} style={{ backgroundColor: 'yellow', color: 'black' }}>Print Bill</button>
+
+                    <button onClick={reset} style={{ backgroundColor: 'green', color: 'white' }}>Add new Bill</button>
+                </div>
+            )
+        }
+        const App = (props) => {
+            const [items, setItems] = useState(props.data)
+            const [searchKey, setSearchKey] = useState('')
+            const [cartItem, setCartItem] = useState([])
+            const handleChangeSearchKey = (e) => {
+                setSearchKey((e.target.value).toLowerCase())
+            }
+            const handleChangeAddItem = (id) => {
+                setSearchKey('')
+                const tot = items.find(ele => {
+                    if (ele.id == id) {
+                        return ele
+                    }
+                })
+                if (cartItem.find(ele => { return ele.id == id })) {
+                    cartItem.find(item => { 
+                        if(item.id == id){
+                            alert(`${item.name} Already have in your Cart`)
+                         item.quantities = (item.quantities + 1)
+                        item.total = item.price * item.quantities  
+                        }
+                    })
+                }
+                else {
+                    const quantity = 1
+                   const newCartItem=cartItem.concat({ ...items.find(item => { if (item.id == id) return item }), quantities: quantity, total: tot.price})
+                    setCartItem(newCartItem);
+                }
+
+            }
+            const incQuantity = (id) => {
+                const add = cartItem.map(item => {
+                    if (item.id == id) {
+                        item.quantities = (item.quantities + 1)
+                        item.total = item.price * item.quantities
+                        console.log(item);
+                    }
+                    return { ...item }
+                })
+                return setCartItem(add)
+            }
+            const decQuantity = (id) => {
+                const add = cartItem.map(item => {
+                    if (item.id == id) {
+                        item.quantities = (item.quantities - 1)
+                        item.total = item.price * item.quantities
+                        console.log(item);
+                    }
+                    return { ...item }
+                })
+                return setCartItem(add)
+
+
+            }
+            const handleRemove = (id) => {
+                confirm(`${id} will be deleted`)
+
+                const newCart = cartItem.filter(ele => {
+                    if (ele.id !== id) {
+                        return ele
+                    }
+                })
+                setCartItem(newCart)
+            }
+            console.log(cartItem);
+            const calSum = () => {
+                let sum = 0
+                cartItem.forEach(ele => { return sum += ele.total }) 
+                return sum
+            }
+
+            const reset = () => {
+                confirm('click OK for reset')
+                setCartItem([])
+            }
+            return (
+                <div>
+                    <Header />
+                    <Search searchKey={searchKey} setSearchKey={setSearchKey} handleChangeSearchKey={handleChangeSearchKey} />
+                    {searchKey && <MenuItem items={items} handleChangeAddItem={handleChangeAddItem} searchKey={searchKey} />}
+                    {cartItem.length > 0 && <CartItem cartItem={cartItem} handleRemove={handleRemove} incQuantity={incQuantity} decQuantity={decQuantity} />}
+                    {cartItem.length > 0 && <Total cartTotal={calSum()} />}
+                    {cartItem.length > 0 && <Bill reset={reset} />}
+                </div>
+            )
+        }
+        ReactDOM.render(<App data={data} />, rootHandle)
+    </script>
+</body>
+
+</html>
